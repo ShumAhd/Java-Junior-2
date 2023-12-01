@@ -19,14 +19,16 @@ public class TestProcessor {
     try {
       declaredConstructor = testClass.getDeclaredConstructor();
     } catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Для класса \"" + testClass.getName() + "\" не найден конструктор без аргументов");
+      throw new IllegalStateException(
+          "Для класса \"" + testClass.getName() + "\" не найден конструктор без аргументов");
     }
 
     final Object testObj;
     try {
       testObj = declaredConstructor.newInstance();
     } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-      throw new RuntimeException("Не удалось создать объект класса \"" + testClass.getName() + "\"");
+      throw new RuntimeException(
+          "Не удалось создать объект класса \"" + testClass.getName() + "\"");
     }
 
     List<Method> methods = new ArrayList<>();
@@ -45,11 +47,13 @@ public class TestProcessor {
 
   private static void checkTestMethod(Method method) {
     if (!method.getReturnType().isAssignableFrom(void.class) || method.getParameterCount() != 0) {
-      throw new IllegalArgumentException("Метод \"" + method.getName() + "\" должен быть void и не иметь аргументов");
+      throw new IllegalArgumentException(
+          "Метод \"" + method.getName() + "\" должен быть void и не иметь аргументов");
     }
 
     if (method.isAnnotationPresent(Skip.class)) {
-      throw new IllegalArgumentException("Тест \"" + method.getName() + "\" помечен аннотацией @Skip и не будет запущен");
+      throw new IllegalArgumentException(
+          "Тест \"" + method.getName() + "\" помечен аннотацией @Skip и не будет запущен");
     }
   }
 
@@ -60,16 +64,19 @@ public class TestProcessor {
 
     try {
       invokeMethod(testMethod, testObj);
-    } catch (InvocationTargetException | IllegalAccessException e) {
-      // handle exceptions
     } catch (AssertionError e) {
-      // handle assertion errors
+      // Распечатываем причину, по которой тест провалился
+      e.printStackTrace();
+      throw new RuntimeException(
+          "Тест \"" + testMethod.getName() + "\" провалился: " + e.getMessage(), e);
     }
 
     if (testMethod.isAnnotationPresent(AfterEach.class)) {
       invokeMethod(testMethod, testObj);
     }
   }
+
+
   private static void invokeMethod(Method method, Object obj) {
     try {
       method.invoke(obj);
