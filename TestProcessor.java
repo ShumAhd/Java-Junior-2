@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class TestProcessor {
@@ -36,6 +37,9 @@ public class TestProcessor {
       }
     }
 
+    // Добавляем сортировку тестов по порядку
+    methods.sort(Comparator.comparingInt(m -> m.getAnnotation(Test.class).order()));
+
     methods.forEach(it -> runTest(it, testObj));
   }
 
@@ -43,15 +47,34 @@ public class TestProcessor {
     if (!method.getReturnType().isAssignableFrom(void.class) || method.getParameterCount() != 0) {
       throw new IllegalArgumentException("Метод \"" + method.getName() + "\" должен быть void и не иметь аргументов");
     }
+
+    if (method.isAnnotationPresent(Skip.class)) {
+      throw new IllegalArgumentException("Тест \"" + method.getName() + "\" помечен аннотацией @Skip и не будет запущен");
+    }
   }
 
   private static void runTest(Method testMethod, Object testObj) {
-    try {
-      testMethod.invoke(testObj);
-    } catch (InvocationTargetException | IllegalAccessException e) {
-      throw new RuntimeException("Не удалось запустить тестовый метод \"" + testMethod.getName() + "\"");
-    } catch (AssertionError e) {
+    if (testMethod.isAnnotationPresent(BeforeEach.class)) {
+      invokeMethod(testMethod, testObj);
+    }
 
+    try {
+      invokeMethod(testMethod, testObj);
+    } catch (InvocationTargetException | IllegalAccessException e) {
+      // handle exceptions
+    } catch (AssertionError e) {
+      // handle assertion errors
+    }
+
+    if (testMethod.isAnnotationPresent(AfterEach.class)) {
+      invokeMethod(testMethod, testObj);
+    }
+  }
+  private static void invokeMethod(Method method, Object obj) {
+    try {
+      method.invoke(obj);
+    } catch (InvocationTargetException | IllegalAccessException e) {
+      // handle exceptions
     }
   }
 
