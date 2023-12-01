@@ -21,3 +21,9 @@ public @interface BeforeEach {
 public @interface AfterEach {
 }
 
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Skip {
+}
+
+
